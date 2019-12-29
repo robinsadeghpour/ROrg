@@ -35,7 +35,7 @@ main:
 	sw $ra, 0($sp)			## save return address on stack
 	sw $s0, 4($sp)			## save previous value of s0 on stack
 	
-	la $a0, correct_number	## load address of number as argument
+	la $a0, wrong_number	## load address of number as argument
 	jal luhn				## call luhn-function
 	move $s0, $v0			## save returned value
 	
@@ -116,40 +116,71 @@ print_string:
 	
 luhn:	
 	move $a1, $a0			# copy address from $a0 to $a1
+	li $s1, 0			# s1 = 0 for sum
 	li $v1, 1			# $v1 = 1
-	li $t1, 48 			# $t1 = 0
-	li $t2, 57			# $t3 = "space"	
-	li $t3, 32 			# $t2 = 9
+	li $t1, 1			# $t1 = 0
+	 
 	
-	jal iterate_string 
-			
-	li $v0, -1			## return -1 for error
+	jal iterate_string 		
+	
+	li $v0, -1	 		## return -1 for error
 	
 	jr $ra				## jump back
-	
+
+		
 iterate_string:
-	lb $t0, 0($a1)
-	beq $t0, $zero, stop_iterating	# if a1 == 0 stop iterating
-	li $v1, 1
-	beq $t0, $t3, ignore_space	# if $a1 == "space" then jump to ignore_space	
-	bgt $t0, $t2, fail_iterating	# if $a1 > 57 then fail
-	blt $t0, $t1, fail_iterating	# if $a2 < 32 then fail
+	li $t2, 48 			# $t1 = 0
+	li $t3, 57			# $t3 = "space"	
+	li $t4, 32 			# $t2 = 9
 	
-	addi $a1, $a1, 1		# $a1 + 4
+	
+	lb $t0, 0($a1)
+	
+	beq $t0, $zero, stop_iterating	# if $t0 == 0 stop iterating
+	li $v1, 1
+	beq $t0, $t4, ignore_space	# if $t0 == "space" then jump to ignore_space	
+	bgt $t0, $t3, fail_iterating	# if $t0 > 57 then fail
+	blt $t0, $t2, fail_iterating	# if $t0 < 32 then fail
+	
+	## is digit
+	
+	li $t2, 2			# $t2 = 2 for x mod 2 operation
+	
+	subi $t3, $t0, 48		# $t3 = $t0 - 48 <- ascii to digit
+				
+	div $t1, $t2			# $t1 / 2 <= hi = $t1 mod 2
+	mfhi $t4			# $t4 = $t1 mod 2
+	
+	beq $t4, $zero, add_sum  	# if $t1 mod 2 != 0 then jump to add_sum 
+	add $t3, $t3, $t3		# $t3  = $t3 + $t3 <- $t3 = $t3 * 2
+	
+	li $t5, 9
+	ble $t3, $t5, add_sum		# if $t3 <= $t5 then jump to add_sum
+	sub $t3, $t3, $t5		# $t3 = $t3 -9 
+	j add_sum
+	  			  			
+	addi $t1, $t1, 1		# $t1++		
+	addi $a1, $a1, 1		# $a1++
+	
 	j iterate_string
 
 stop_iterating:
 	jr $ra				# return 
 
 ignore_space:
-	addi $a1, $a1, 1		# $a1 + 4
+	addi $a1, $a1, 1		# $a1++
 	j iterate_string		# jump back to iterate_string
 
 fail_iterating:
 	li $v1, 0			# $v1 = 0
 	jr $ra				# return to luhn
 	
+add_sum: 
+	add $s1, $s1, $t3		# $s1 = $s1 + $t3 <- sum = sum + digit
+	addi $t1, $t1, 1		# $t1++
+	addi $a1, $a1, 1		# $a1++
 	
+	j iterate_string
 	
 ############################################
 # 
