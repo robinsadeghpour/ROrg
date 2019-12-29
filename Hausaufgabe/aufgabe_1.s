@@ -116,12 +116,10 @@ print_string:
 	
 luhn:	
 	move $a1, $a0			# copy address from $a0 to $a1
-	li $s1, 0			# s1 = 0 for sum
-	li $v1, 1			# $v1 = 1
-	li $t1, 1			# $t1 = 0
-	 
+	li $s1, 0			# s1 = 0 for sum		## TODO use t register
+	li $t1, 1			# $t1 = 0			
 	
-	jal iterate_string 		
+	j iterate_string 		
 	
 	li $v0, -1	 		## return -1 for error
 	
@@ -165,22 +163,27 @@ iterate_string:
 	j iterate_string
 
 stop_iterating:
-	jr $ra				# return 
+	li $t1, 10			# $t1 = 10
+	
+	div $s1, $t1			# $s1 / 10 
+	mfhi $v0			# $v0 = $s1 mod 10
+	
+	jr $ra				## return 
 
 ignore_space:
 	addi $a1, $a1, 1		# $a1++
-	j iterate_string		# jump back to iterate_string
+	j iterate_string		# jump to iterate_string
 
 fail_iterating:
-	li $v1, 0			# $v1 = 0
-	jr $ra				# return to luhn
+	li $v0, -1			## return $v0 = -1 for error
+	jr $ra				## jump back 
 	
 add_sum: 
 	add $s1, $s1, $t3		# $s1 = $s1 + $t3 <- sum = sum + digit
 	addi $t1, $t1, 1		# $t1++
 	addi $a1, $a1, 1		# $a1++
 	
-	j iterate_string
+	j iterate_string		# jump to iterate_string
 	
 ############################################
 # 
