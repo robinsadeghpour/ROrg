@@ -1,7 +1,7 @@
 ############################################
-# MATRIKELNUMMER: xxxxxx
-# VORNAME: xxxxxx
-# NACHNAME: xxxxxx
+# MATRIKELNUMMER: 410893
+# VORNAME: ROBIN	
+# NACHNAME: SADEGHPOUR
 ############################################
 # ID-STRING | DO NOT CHANGE!
 # ~~~ rorg_ws1920_ha1_a1 ~~~
@@ -115,8 +115,11 @@ print_string:
 # $v0: result of luhn-algorithm (should be 0 for correct credit-card number, > 0 if incorrect, -1 if error) 
 	
 luhn:	
-	move $a1, $a0			# copy address from $a0 to $a1
-	li $s1, 0			# s1 = 0 for sum		## TODO use t register
+	subi $sp, $sp, 4		## Non-leaf function, make space for 1 reg
+	li $s1, 0			# s1 = 0 for sum		
+	move $t6, $a0			# copy address from $a0 to $t6
+	sw $s1, 8($sp)			# save value on stack
+	
 	li $t1, 1			# $t1 = 0			
 	
 	j iterate_string 		
@@ -132,15 +135,14 @@ iterate_string:
 	li $t4, 32 			# $t2 = 9
 	
 	
-	lb $t0, 0($a1)
+	lb $t0, 0($t6)			# load single byte from string in $t0
 	
-	beq $t0, $zero, stop_iterating	# if $t0 == 0 stop iterating
-	li $v1, 1
+	beq $t0, $zero, end_luhn	# if $t0 == 0 stop iterating
 	beq $t0, $t4, ignore_space	# if $t0 == "space" then jump to ignore_space	
-	bgt $t0, $t3, fail_iterating	# if $t0 > 57 then fail
-	blt $t0, $t2, fail_iterating	# if $t0 < 32 then fail
+	bgt $t0, $t3, fail_luhn	# if $t0 > 9 (ascii 57) then fail
+	blt $t0, $t2, fail_luhn	# if $t0 < 0 (ascii 52) then fail
 	
-	## is digit
+	## is digit ##
 	
 	li $t2, 2			# $t2 = 2 for x mod 2 operation
 	
@@ -158,30 +160,43 @@ iterate_string:
 	j add_sum
 	  			  			
 	addi $t1, $t1, 1		# $t1++		
-	addi $a1, $a1, 1		# $a1++
+	addi $t6, $t6, 1		# $t6++
 	
 	j iterate_string
 
-stop_iterating:
-	li $t1, 10			# $t1 = 10
+end_luhn:
+	li $t1, 10			# $t1 = 10 for x mod 10 operation
 	
-	div $s1, $t1			# $s1 / 10 
-	mfhi $v0			# $v0 = $s1 mod 10
+	div $s1, $t1			# $s1 / 10 <- hi register contains remainder
+	sw $s1, 8($sp)			# save value on stack				
 	
-	jr $ra				## return 
+	mfhi $v0			# return $v0 = $s1 mod 10 
+	
+	lw $s1, 8($sp)			## restore previous value of s1 from stack
+	addi $sp, $sp, 4		## free memory
+	
+	jr $ra				## jump back 
 
 ignore_space:
-	addi $a1, $a1, 1		# $a1++
+	## do nothing and iterate with next byte ##
+	
+	addi $t6, $t6, 1		# $t6++
+	
 	j iterate_string		# jump to iterate_string
 
-fail_iterating:
+fail_luhn:
+	## string does not only contain digits ##
+	
 	li $v0, -1			## return $v0 = -1 for error
+	
 	jr $ra				## jump back 
 	
 add_sum: 
 	add $s1, $s1, $t3		# $s1 = $s1 + $t3 <- sum = sum + digit
+	sw $s1, 8($sp)			# save value on stack
+	
 	addi $t1, $t1, 1		# $t1++
-	addi $a1, $a1, 1		# $a1++
+	addi $t6, $t6, 1		# $t6++
 	
 	j iterate_string		# jump to iterate_string
 	
