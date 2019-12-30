@@ -185,6 +185,9 @@ ignore_space:
 fail_luhn:
 	## string does not only contain digits ##
 	
+	lw $s1, 0($sp)			## restore $S1
+	addi $sp, $sp, 4		## free memory
+	
 	li $v0, -1			## return $v0 = -1 for error
 	
 	jr $ra				## jump back 
