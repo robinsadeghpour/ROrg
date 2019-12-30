@@ -116,9 +116,11 @@ print_string:
 	
 luhn:	
 	subi $sp, $sp, 4		## Non-leaf function, make space for 1 reg
-	li $s1, 0			# s1 = 0 for sum		
+	
+	sw $s1, 0($sp)			# save value on stack
+	li $s1, 0			# s1 = 0 for sum
+			
 	move $t6, $a0			# copy address from $a0 to $t6
-	sw $s1, 8($sp)			# save value on stack
 	
 	li $t1, 1			# $t1 = 0			
 	
@@ -127,13 +129,11 @@ luhn:
 	li $v0, -1	 		## return -1 for error
 	
 	jr $ra				## jump back
-
 		
 iterate_string:
 	li $t2, 48 			# $t1 = 0
 	li $t3, 57			# $t3 = "space"	
 	li $t4, 32 			# $t2 = 9
-	
 	
 	lb $t0, 0($t6)			# load single byte from string in $t0
 	
@@ -166,13 +166,11 @@ iterate_string:
 
 end_luhn:
 	li $t1, 10			# $t1 = 10 for x mod 10 operation
-	
-	div $s1, $t1			# $s1 / 10 <- hi register contains remainder
-	sw $s1, 8($sp)			# save value on stack				
-	
+		
+	div $s1, $t1			# $s1 / 10 <- hi register contains remainder			
 	mfhi $v0			# return $v0 = $s1 mod 10 
 	
-	lw $s1, 8($sp)			## restore previous value of s1 from stack
+	lw $s1, 0($sp)			## restore $S1
 	addi $sp, $sp, 4		## free memory
 	
 	jr $ra				## jump back 
@@ -193,7 +191,6 @@ fail_luhn:
 	
 add_sum: 
 	add $s1, $s1, $t3		# $s1 = $s1 + $t3 <- sum = sum + digit
-	sw $s1, 8($sp)			# save value on stack
 	
 	addi $t1, $t1, 1		# $t1++
 	addi $t6, $t6, 1		# $t6++
