@@ -5,7 +5,7 @@
 ############################################
 # ID-STRING | DO NOT CHANGE!
 # ~~~ rorg_ws1920_ha1_a3 ~~~
-# ~~~ Version: 20191210  ~~~
+# ~~~ Version: 20191230  ~~~
 # ID-STRING | DO NOT CHANGE!
 ############################################
 #
@@ -76,7 +76,7 @@ print_sketch:
 		
 		width_loop:
 		bge $t3, $t1, end_width_loop
-			sll $t4, $t2, 6
+			mul $t4, $t2, $t1
 			add $t4, $t4, $t3
 			sll $t4, $t4, 2 
 			add $t4, $t4, $t5
@@ -145,46 +145,12 @@ print_string:
 H3_hash:
 	li $v0, 0
 	
-	sll $t4, $a1, 7			# $t4 = $a1 * 32 (2^5) * 4 (2^2) (= $a1 * 2^7) <- Offset				
-	
-	li $t0, 0			# $t0 = 0
-	
-	j loop_keybits
+	##
+	## COPY YOUR SOLUTION FROM PREVIOUS ASSIGNMENT OR LEAVE THIS FUNCTION AS IT IS
+	##
 	
 	jr $ra
-
-loop_keybits:	
-	move $t3, $a0			# copy address of $a0 to $t3
-				
-	beq $a2, $zero, quit_loop	# if key == 0 stop iterating	 
-	andi $t1, $a2, 0x01		# get least signaficant bit of $a2
 	
-	li $t2, 1			# $t2 = 1
-	bne $t1, $t2, jump_bit		# if the bit is set ($t1 == 1) 	
-	
-	sll $t2, $t0, 2			# $t2 = $t0 * 4	
-	
-	add $t3, $t3, $t4		# shift the array with the offset $t4
-	add $t3, $t3, $t2		# shift the index of array  
-	
-	lw  $t2, 0($t3) 		# $t2 = value of $a0 				
-	
-	xor $v0, $v0, $t2		# previous value xor new value	
-	
-	srl $a2, $a2, 1			# shift $a2 to next bit
-	addi $t0, $t0, 1		# $t0++
-	
-	j loop_keybits
-
-jump_bit:	
-	srl $a2, $a2, 1			# shift $a2 to next bit
-	addi $t0, $t0, 1		# $t0++
-	
-	j loop_keybits
-
-quit_loop:				
-	jr $ra
-
 ############################################
 #
 # YOUR SOLUTION HERE BELOW!
