@@ -1,7 +1,7 @@
 ############################################
-# MATRIKELNUMMER: xxxxxx
-# VORNAME: xxxxxx
-# NACHNAME: xxxxxx
+# MATRIKELNUMMER: 410893
+# VORNAME: ROBIN
+# NACHNAME: SADEGHPOUR
 ############################################
 # ID-STRING | DO NOT CHANGE!
 # ~~~ rorg_ws1920_ha1_a3 ~~~
@@ -207,6 +207,7 @@ insert:
 	sw $s3, 12($sp)			# store $s3 on stack
 	sw $s4, 16($sp)			# store $s4 on stack
 	sw $s5, 20($sp)			# store $s5 on stack
+	sw $ra, 24($sp)			# store $ra address on stack
 	
 	lw $s0, height			# $t0 = height of sketch
 	lw $s1, width			# $t1 = width of sketch
@@ -227,9 +228,9 @@ loop_rows:
 	la $a0, ($a1)			# load base address of array q to %a0 as argument for h3_hash 	
 	la $a1, ($s2)			# load row index to %a1 as seed	as argument for h3_hash
 	
-	sw $ra, 24($sp)			# store $ra address on stack
+	
 	jal H3_hash			# jump to h3, get column index 
-	lw $ra, 24($sp)			# restore $ra
+	
 	
 	la $a0, ($s3)			# restore argument	
 	la $a1, ($s4)			# restore argument
@@ -255,8 +256,9 @@ quit_loop_rows:
 	lw $s3, 12($sp)			# restore $s3 
 	lw $s4, 16($sp)			# restore $s4
 	lw $s5, 20($sp)			# restore $s5
+	lw $ra, 24($sp)			# restore $ra
 		
-	addi $sp, $sp, 24		# free stack
+	addi $sp, $sp, 28		# free stack
 	
 	jr $ra
 	
@@ -268,20 +270,54 @@ quit_loop_rows:
 
 # Return type: void 
 update:
+	subi $sp, $sp, 24		# allocate stack
+	
+	sw $s0, 0($sp)			# store $s0 on stack
+	sw $s1, 4($sp)			# store $s1 on stack
+	sw $s2, 8($sp)			# store $s2 on stack
+	sw $s3, 12($sp)			# store $s3 on stack
+	sw $s4, 16($sp)			# store $s4 on stack
+	sw $ra, 20($sp)			# store $ra on stack
+	
+	lw $s0, length  		# $s0 = length of key array
+	la $s1, ($a2)			# safe argument in $s1
+	la $s3, ($a0)			# safe argument in $s3
+	la $s4, ($a1)			# safe argument in $s4
+	
+	li $s2, 0			# $s2 = 0
+	
+	j key_loop			# jump to key_loop
+	
+	jr $ra 				# jump back to $ra
 
-	### ALWAYS LOAD FIRST KEY, FOR DEBUGGING
-	addi $sp, $sp, -4
-	sw $ra, 0($sp)
+key_loop:
+	beq $s2, $s0, quit_key_loop	# if $s1 = length quit_key_loop
 	
-	lw $a2, 0($a2)
-	jal insert
+	sll $t0, $s2, 2			# $t0 = $s2 * 4
+	add $t0, $t0, $a2		# $t0 = baseaddress of array + $s2   
+	lw  $a2, 0($t0)			# load value from $t0 to $a2 
+		
+	jal insert			# call insert 
 	
-	lw $ra, 0($sp)
-	addi $sp, $sp, 4
-	### ALWAYS LOAD FIRST KEY, FOR DEBUGGING
+	la $a0, ($s3)			# restore argument
+	la $a1, ($s4)			# restore argument
+	la $a2, ($s1)			# restore argument
 	
-	jr $ra 
+	addi $s2, $s2, 1		# $s2++
+	j key_loop			# jump key_loop
 	
+quit_key_loop:
+	lw $s0, 0($sp)			# restore $s0
+	lw $s1, 4($sp)			# restore $s1 
+	lw $s2, 8($sp)			# restore $s2 
+	lw $s3, 12($sp)			# restore $s3 
+	lw $s4, 16($sp)			# restore $s4 
+	lw $ra, 20($sp)			# restore $ra
+	
+	addi $sp, $sp, 24		# free stack 
+
+	jr $ra				# jump back to $ra
+			
 ############################################
 #
 # YOUR SOLUTION HERE ABOVE!
