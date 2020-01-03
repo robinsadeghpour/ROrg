@@ -143,13 +143,47 @@ print_string:
 
 # $v0: Calculated hashvalue
 H3_hash:
-	li $v0, 0
+	li $v0, 0			# $v0 = 0
+		
+	sll $t4, $a1, 7			# $t4 = $a1 * 32 (2^5) * 4 (2^2) (= $a1 * 2^7) <- Offset				
 	
-	##
-	## COPY YOUR SOLUTION FROM PREVIOUS ASSIGNMENT OR LEAVE THIS FUNCTION AS IT IS
-	##
+	li $t0, 0			# $t0 = 0
+	
+	j loop_keybits			
 	
 	jr $ra
+	
+loop_keybits:	
+	move $t3, $a0			# copy address of $a0 to $t3
+				
+	beq $a2, $zero, quit_loop	# if key == 0 stop iterating	 
+	andi $t1, $a2, 0x01		# get least signaficant bit of $a2
+	
+	li $t2, 1			# $t2 = 1
+	bne $t1, $t2, jump_bit		# if the bit is set ($t1 == 1) 	
+	
+	sll $t2, $t0, 2			# $t2 = $t0 * 4	
+	
+	add $t3, $t3, $t4		# shift the array with the offset $t4
+	add $t3, $t3, $t2		# shift the index of array  
+	
+	lw  $t2, 0($t3) 		# $t2 = value of $a0 				
+	
+	xor $v0, $v0, $t2		# previous value xor new value	
+	
+	srl $a2, $a2, 1			# shift $a2 to next bit
+	addi $t0, $t0, 1		# $t0++
+	
+	j loop_keybits
+
+jump_bit:	
+	srl $a2, $a2, 1			# shift $a2 to next bit
+	addi $t0, $t0, 1		# $t0++
+	
+	j loop_keybits
+
+quit_loop:				
+	jr $ra	
 	
 ############################################
 #
@@ -165,6 +199,64 @@ H3_hash:
 
 # Return type: void
 insert:
+	subi $sp, $sp, 28		# allocate room on stack
+	
+	sw $s0, 0($sp)			# store $s0 on stack
+	sw $s1, 4($sp)			# store $s1 on stack
+	sw $s2, 8($sp)			# store $s2 on stack
+	sw $s3, 12($sp)			# store $s3 on stack
+	sw $s4, 16($sp)			# store $s4 on stack
+	sw $s5, 20($sp)			# store $s5 on stack
+	
+	lw $s0, height			# $t0 = height of sketch
+	lw $s1, width			# $t1 = width of sketch
+	
+	li $s2, 0			# $t2 = 0
+	
+	la $s3, ($a0)			# safe base address of sketch buffer in $s3
+	la $s4, ($a1)			# safe base address of array q in $s4
+	la $s5, ($a2)			# safe key in $s5
+	
+	j loop_rows			
+		
+	jr $ra
+	
+loop_rows:
+	bge $s2, $s0, quit_loop_rows
+	
+	la $a0, ($a1)			# load base address of array q to %a0 as argument for h3_hash 	
+	la $a1, ($s2)			# load row index to %a1 as seed	as argument for h3_hash
+	
+	sw $ra, 24($sp)			# store $ra address on stack
+	jal H3_hash			# jump to h3, get column index 
+	lw $ra, 24($sp)			# restore $ra
+	
+	la $a0, ($s3)			# restore argument	
+	la $a1, ($s4)			# restore argument
+	la $a2, ($s5)			# restore argument
+	
+	mul $t4, $s2, $s1       	# $t4 = seed*width
+	add $t4, $t4, $v0		# $t4 = $t4 + hash value
+	sll $t4, $t4, 2			# $t4 = $t4 * 4
+	
+	add $t6, $a0, $t4 		# $t6 = base address of sketch buffer + $t4
+	lw $t5, 0($t6) 			# load value from sketch buffer
+	addi $t5, $t5, 1		# $t5 = $t5 + 1  						
+	sw $t5, 0($t6)			# store value back to sketch buffer
+					
+	addi $s2, $s2, 1		# $s2++
+	
+	j loop_rows			
+	
+quit_loop_rows:
+	lw $s0, 0($sp)			# restore $s0 
+	lw $s1, 4($sp)			# restore $s1 
+	lw $s2, 8($sp)			# restore $s2 
+	lw $s3, 12($sp)			# restore $s3 
+	lw $s4, 16($sp)			# restore $s4
+	lw $s5, 20($sp)			# restore $s5
+		
+	addi $sp, $sp, 24		# free stack
 	
 	jr $ra
 	
