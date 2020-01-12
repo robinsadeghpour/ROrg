@@ -118,9 +118,8 @@ H3_hash:
 	
 	li $t0, 0			# $t0 = 0
 	
-	j loop_keybits			
+	j loop_keybits			# jump to loop_keybits
 	
-	jr $ra
 	
 loop_keybits:	
 	move $t3, $a0			# copy address of $a0 to $t3
@@ -143,16 +142,16 @@ loop_keybits:
 	srl $a2, $a2, 1			# shift $a2 to next bit
 	addi $t0, $t0, 1		# $t0++
 	
-	j loop_keybits
+	j loop_keybits			# jump to loop_keybits
 
 jump_bit:	
 	srl $a2, $a2, 1			# shift $a2 to next bit
 	addi $t0, $t0, 1		# $t0++
 	
-	j loop_keybits
+	j loop_keybits			# jump to loop_keybits
 
 quit_loop:				
-	jr $ra	
+	jr $ra				# go back
 	
 ############################################
 # 

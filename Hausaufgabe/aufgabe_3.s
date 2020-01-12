@@ -1,11 +1,11 @@
 ############################################
-# MATRIKELNUMMER: 410893
-# VORNAME: ROBIN
-# NACHNAME: SADEGHPOUR
+# MATRIKELNUMMER: xxxxxx
+# VORNAME: xxxxxx
+# NACHNAME: xxxxxx
 ############################################
 # ID-STRING | DO NOT CHANGE!
 # ~~~ rorg_ws1920_ha1_a3 ~~~
-# ~~~ Version: 20191230  ~~~
+# ~~~ Version: 20200107  ~~~
 # ID-STRING | DO NOT CHANGE!
 ############################################
 #
@@ -61,43 +61,53 @@ main:
 # $a0: Die Adresse vom Sketch
 #################################
 print_sketch:
-	addi $sp, $sp, -4
+	addi $sp, $sp, -24
 	sw $ra, 0($sp)
+	sw $s0, 4($sp)
+	sw $s1, 8($sp)
+	sw $s2, 12($sp)
+	sw $s3, 16($sp)
+	sw $s4, 20($sp)
 	
-	lw $t0, height
-	lw $t1, width
-	li $t2, 0			# Zaehler ueber den sketch 
+	lw $s0, height
+	lw $s1, width
+	li $s2, 0			# Zaehler ueber den sketch 
 
-	move $t5, $a0
+	move $s3, $a0
 	
 	height_loop:
-	bge $t2, $t0, end_height_loop
-		li $t3, 0			# zaehler ueber die Breite 
+	bge $s2, $s0, end_height_loop
+		li $s4, 0			# zaehler ueber die Breite 
 		
 		width_loop:
-		bge $t3, $t1, end_width_loop
-			mul $t4, $t2, $t1
-			add $t4, $t4, $t3
-			sll $t4, $t4, 2 
-			add $t4, $t4, $t5
-			lw $a0, 0($t4)		# Eintrag zum ausgeben  
+		bge $s4, $s1, end_width_loop
+			mul $t0, $s2, $s1
+			add $t0, $t0, $s4
+			sll $t0, $t0, 2 
+			add $t0, $t0, $s3
+			
+			lw $a0, 0($t0)		# Eintrag zum ausgeben  
 			jal print_int
 			
-			addi $t3, $t3, 1 
+			addi $s4, $s4, 1 
 			j width_loop
+		
 		end_width_loop:
-	
 	# Neue Zeile
     jal print_new_line
 	
-	addi $t2, $t2, 1 
-	
+	addi $s2, $s2, 1 
 	j height_loop
 	
 	end_height_loop: 
 	
 	lw $ra, 0($sp)
-	addi $sp, $sp, 4
+	lw $s0, 4($sp)
+	lw $s1, 8($sp)
+	lw $s2, 12($sp)
+	lw $s3, 16($sp)
+	lw $s4, 20($sp)
+	addi $sp, $sp, 24
 	
 	jr $ra
 
@@ -180,7 +190,7 @@ jump_bit:
 	srl $a2, $a2, 1			# shift $a2 to next bit
 	addi $t0, $t0, 1		# $t0++
 	
-	j loop_keybits
+	j loop_keybits			
 
 quit_loop:				
 	jr $ra	
@@ -218,19 +228,15 @@ insert:
 	la $s4, ($a1)			# safe base address of array q in $s4
 	la $s5, ($a2)			# safe key in $s5
 	
-	j loop_rows			
-		
-	jr $ra
+	j loop_rows			# jump to loop_rows
 	
 loop_rows:
-	bge $s2, $s0, quit_loop_rows
+	bge $s2, $s0, quit_loop_rows	# if $s2 >= $s0 then jump to quit_loop_rows
 	
 	la $a0, ($a1)			# load base address of array q to %a0 as argument for h3_hash 	
 	la $a1, ($s2)			# load row index to %a1 as seed	as argument for h3_hash
 	
-	
 	jal H3_hash			# jump to h3, get column index 
-	
 	
 	la $a0, ($s3)			# restore argument	
 	la $a1, ($s4)			# restore argument
@@ -247,7 +253,7 @@ loop_rows:
 					
 	addi $s2, $s2, 1		# $s2++
 	
-	j loop_rows			
+	j loop_rows			# jump to loop rows
 	
 quit_loop_rows:
 	lw $s0, 0($sp)			# restore $s0 
@@ -260,7 +266,8 @@ quit_loop_rows:
 		
 	addi $sp, $sp, 28		# free stack
 	
-	jr $ra
+	jr $ra				# go back
+	
 	
 # Iterates of an array of keys to be inserted
 # 
@@ -317,7 +324,7 @@ quit_key_loop:
 	addi $sp, $sp, 24		# free stack 
 
 	jr $ra				# jump back to $ra
-			
+	
 ############################################
 #
 # YOUR SOLUTION HERE ABOVE!
